@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSPM Scan Report — {{ scan_id }}</title>
+<style>
+  :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --pass: #3fb950; --fail: #f85149; --crit: #f85149; --high: #db6d28; --med: #d29922; --low: #58a6ff; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; padding: 2rem; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .meta { color: var(--muted); font-size: 0.875rem; margin-bottom: 1.5rem; }
+  .summary { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1rem 1.5rem; min-width: 120px; }
+  .card .label { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; }
+  .card .value { font-size: 1.75rem; font-weight: 600; }
+  .card .value.pass { color: var(--pass); }
+  .card .value.fail { color: var(--fail); }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  th { background: #1c2128; text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+  td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.875rem; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .sev { font-weight: 600; border-radius: 3px; padding: 2px 8px; font-size: 0.75rem; }
+  .sev-CRITICAL { background: rgba(248,81,73,0.15); color: var(--crit); }
+  .sev-HIGH { background: rgba(219,109,40,0.15); color: var(--high); }
+  .sev-MEDIUM { background: rgba(210,153,34,0.15); color: var(--med); }
+  .sev-LOW { background: rgba(88,166,255,0.15); color: var(--low); }
+  .remediation { color: var(--muted); font-family: monospace; font-size: 0.8rem; word-break: break-all; }
+  .empty { text-align: center; padding: 2rem; color: var(--pass); font-size: 1.25rem; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>CSPM Scan Report</h1>
+  <div class="meta">Scan ID: {{ scan_id }} &middot; {{ timestamp }} &middot; Region: {{ region }}</div>
+
+  <div class="summary">
+    <div class="card"><div class="label">Total Checks</div><div class="value">{{ total }}</div></div>
+    <div class="card"><div class="label">Passed</div><div class="value pass">{{ pass_count }}</div></div>
+    <div class="card"><div class="label">Failed</div><div class="value fail">{{ fail_count }}</div></div>
+    {% for sev, count in severity_counts.items() %}
+    <div class="card"><div class="label">{{ sev }}</div><div class="value">{{ count }}</div></div>
+    {% endfor %}
+  </div>
+
+  {% if failures %}
+  <table>
+    <thead>
+      <tr><th>Severity</th><th>CIS</th><th>Check</th><th>Resource</th><th>Description</th><th>Remediation</th></tr>
+    </thead>
+    <tbody>
+      {% for f in failures %}
+      <tr>
+        <td><span class="sev sev-{{ f.severity.value }}">{{ f.severity.value }}</span></td>
+        <td>{{ f.cis_id }}</td>
+        <td>{{ f.title }}</td>
+        <td style="font-family:monospace;font-size:0.8rem">{{ f.resource_arn }}</td>
+        <td>{{ f.description }}</td>
+        <td class="remediation">{{ f.remediation }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty">All checks passed.</div>
+  {% endif %}
+</div>
+</body>
+</html>

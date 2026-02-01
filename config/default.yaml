@@ -1,0 +1,16 @@
+regions:
+  - us-east-1
+
+# LocalStack endpoint for local testing:
+endpoint_url: http://localhost:4566
+
+checks:
+  - all
+
+output_format: console
+db_path: cspm_findings.db
+
+slack:
+  enabled: false
+  webhook_url: ""
+  min_severity: HIGH

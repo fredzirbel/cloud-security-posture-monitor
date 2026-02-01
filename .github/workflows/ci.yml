@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - run: ruff check src/ tests/
+
+  test-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - run: pytest tests/unit/ -v --tb=short
+
+  test-integration:
+    runs-on: ubuntu-latest
+    services:
+      localstack:
+        image: localstack/localstack:latest
+        ports:
+          - 4566:4566
+        env:
+          SERVICES: s3,iam,ec2,rds,cloudtrail,sts
+          DEFAULT_REGION: us-east-1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - name: Wait for LocalStack
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:4566/_localstack/health && break
+            sleep 2
+          done
+      - name: Provision vulnerable resources
+        run: |
+          pip install awscli-local
+          # Create a vulnerable S3 bucket (no public access block, no encryption)
+          awslocal s3 mb s3://cspm-demo-vulnerable-bucket
+          # Create a security group with SSH open to world
+          VPC_ID=$(awslocal ec2 create-vpc --cidr-block 10.0.0.0/16 --query 'Vpc.VpcId' --output text)
+          SG_ID=$(awslocal ec2 create-security-group --group-name open-ssh --description "test" --vpc-id $VPC_ID --query 'GroupId' --output text)
+          awslocal ec2 authorize-security-group-ingress --group-id $SG_ID --protocol tcp --port 22 --cidr 0.0.0.0/0
+      - name: Run CSPM scan
+        run: |
+          cspm scan --config config/default.yaml --output json --output-file ci_report.json
+        env:
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_DEFAULT_REGION: us-east-1
+      - name: Run integration tests
+        run: pytest tests/integration/ -v --tb=short
+        env:
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_DEFAULT_REGION: us-east-1
+          LOCALSTACK_ENDPOINT: http://localhost:4566
