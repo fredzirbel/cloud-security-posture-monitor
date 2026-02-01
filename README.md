@@ -4,12 +4,37 @@ A from-scratch Python tool that scans AWS environments for security misconfigura
 
 Built as a portfolio project to demonstrate cloud security engineering skills. Uses LocalStack for fully reproducible demos without an AWS account.
 
+---
+
+## Demo
+
+### Console Scan Output
+
+<p align="center">
+  <img src="docs/images/console-scan.png" alt="Console scan — severity-colored findings with CIS mapping" width="800">
+</p>
+
+### Remediation Commands
+
+<p align="center">
+  <img src="docs/images/remediation-commands.png" alt="Remediation — actionable AWS CLI fix commands per finding" width="800">
+</p>
+
+### HTML Report
+
+<p align="center">
+  <img src="docs/images/html-report.png" alt="HTML report — metrics dashboard with findings table" width="800">
+</p>
+
+---
+
 ## Features
 
 - **17 automated security checks** across S3, IAM, Security Groups, RDS, CloudTrail, and password policy
 - **CIS Benchmark mapping** — every finding references its CIS AWS Foundations v3.0 control
 - **Severity classification** — CRITICAL / HIGH / MEDIUM / LOW with consistent logic
 - **Multi-format output** — colored terminal (Rich), JSON, and HTML reports
+- **Remediation commands** — actionable AWS CLI commands for every failed check
 - **Slack alerting** — webhook integration with configurable severity thresholds
 - **Trend analysis** — SQLite persistence with scan-over-scan delta comparison
 - **LocalStack demo** — full end-to-end demo without an AWS account

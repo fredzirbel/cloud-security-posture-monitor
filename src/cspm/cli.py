@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
 
 from cspm.config import Config
 from cspm.scanner import run_scan
@@ -45,6 +46,9 @@ def main(argv: list[str] | None = None) -> int:
         parse_args(["--help"])
         return 1
 
+    config_path = Path(args.config).resolve()
+    config_dir = config_path.parent
+
     config = Config.from_yaml(args.config)
     result = run_scan(config)
 
@@ -56,13 +60,13 @@ def main(argv: list[str] | None = None) -> int:
 
     # JSON output
     if args.output in ("json", "all"):
-        path = args.output_file or f"cspm_report_{result.scan_id}.json"
+        path = args.output_file or str(config_dir / f"cspm_report_{result.scan_id}.json")
         write_json_report(result, path)
         print(f"\nJSON report written to {path}")
 
     # HTML output
     if args.output in ("html", "all"):
-        path = args.output_file or f"cspm_report_{result.scan_id}.html"
+        path = args.output_file or str(config_dir / f"cspm_report_{result.scan_id}.html")
         write_html_report(result, path)
         print(f"\nHTML report written to {path}")
 
